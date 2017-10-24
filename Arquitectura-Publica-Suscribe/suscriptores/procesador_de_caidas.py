@@ -4,6 +4,7 @@
 # Archivo: procesador_de_presion.py
 # Capitulo: 3 Estilo Publica-Subscribe
 # Autor(es): Perla Velasco & Yonathan Mtz.
+# Actualizado por lily's team
 # Version: 2.0.1 Mayo 2017
 # Descripción:
 #
@@ -76,9 +77,9 @@ class ProcesadorAceleracion:
             channel = connection.channel()
             # Se declara una cola para leer los mensajes enviados por el
             # Publicador
-            channel.queue_declare(queue='acceleration', durable=True)
+            channel.queue_declare(queue='caidas', durable=True)
             channel.basic_qos(prefetch_count=1)
-            channel.basic_consume(self.callback, queue='acceleration')
+            channel.basic_consume(self.callback, queue='caidas')
             channel.start_consuming()  # Se realiza la suscripción en el Distribuidor de Mensajes
         except (KeyboardInterrupt, SystemExit):
             channel.close()  # Se cierra la conexión
@@ -89,13 +90,13 @@ class ProcesadorAceleracion:
     def callback(self, ch, method, properties, body):
         gravedad = 9.81 
         #si la aceleracion supera los limites quiere decir que hubo una caida
-        #se recomienda usar 3G para medir una caida pero para propositos de la simulacion usaremos 1.5G
-        limite_superior = 1.5*gravedad
+        #se recomienda usar 3G para medir una caida pero para propositos de la simulacion usaremos 1.0G
+        limite_superior = 1.0*gravedad
         limite_inferior = gravedad/2
         magnitud_aceleracion = 0
 
         json_message = self.string_to_json(body)
-        x, y, z = json_message['acceleration'].split(",")
+        x, y, z = json_message['caidas'].split(",")
         x = float(x)
         y = float(y) 
         z = float(z)
