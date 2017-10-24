@@ -190,6 +190,31 @@ class XiaomiMyBand:
         print('[x] valor publicado!')
         print('')
 
+        sleep(.5)
+
+
+        message = {}
+        message['medicinas'] = self.simulate_hours_of_sleep()
+        message['id'] = str(self.id)
+        message['datetime'] = self.simulate_datetime()
+        message['producer'] = self.producer
+        message['model'] = self.model
+        message['hardware_version'] = self.hardware_version
+        message['software_version'] = self.software_version
+        # Se establece la conexión con el Distribuidor de Mensajes
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        # Se solicita un canal por el cuál se enviarán los signos vitales
+        channel = connection.channel()
+        # Se declara una cola para persistir los mensajes enviados
+        channel.queue_declare(queue='medicinas', durable=True)
+        print('[x] publicando hora de medicina ...')
+        self.draw_progress_bar(2)
+        channel.basic_publish(exchange='', routing_key='medicinas', body=str(message), properties=pika.BasicProperties(
+            delivery_mode=2,))  # Se realiza la publicación del mensaje en el Distribuidor de Mensajes
+        connection.close()  # Se cierra la conexión
+        print('[x] valor publicado!')
+        print('')
+       
     def simulate_datetime(self):
         return time.strftime("%d:%m:%Y:%H:%M:%S")
 

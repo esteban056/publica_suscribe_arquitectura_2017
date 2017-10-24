@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #-------------------------------------------------------------------------
-# Archivo: procesador_de_presion.py
+# Archivo: procesador_de_caidas.py
 # Capitulo: 3 Estilo Publica-Subscribe
 # Autor(es): Perla Velasco & Yonathan Mtz.
 # Actualizado por lily's team
-# Version: 2.0.1 Mayo 2017
+# Version: 2.0.1 Octubre 2017
 # Descripción:
 #
 #   Esta clase define el rol de un suscriptor, es decir, es un componente que recibe mensajes.

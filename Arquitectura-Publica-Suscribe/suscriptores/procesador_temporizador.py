@@ -1,24 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 #--------------------------------------------------------------------------------------------------
-# Archivo: SensorTemporizador.py
+# Archivo: procesador_temporizador.py
 # Capitulo: 3 Estilo Publica-Subscribe
-# Autor(es): Perla Velasco & Yonathan Mtz & Alan Mercado.
-# Version: 1.5.2 Marzo 2017
+# Autor(es): Perla Velasco & Yonathan Mtz.
+# Actualizado por lily's team
+# Version: 1.0.1 Octubre 2017
 # Descripción:
 #
 #   Ésta clase define el rol de un publicador que envia mensajes a una cola
 #   específica.
 #   Las características de ésta clase son las siguientes:
 #
-#                                      SensorTemporizador.py
+#                                        SensorTemporizador.py
 #           +-----------------------+-------------------------+------------------------+
 #           |  Nombre del elemento  |     Responsabilidad     |      Propiedades       |
 #           +-----------------------+-------------------------+------------------------+
 #           |                       |  - Enviar mensajes      |  - Se conecta a la cola|
-#           |      Publicador       |                         |    'direct timer      '|
-#           |                       |                         |  - Envia datos de tiem-|
-#           |                       |                         |    po a la cola.       |
+#           |      Publicador       |                         |    'direct timer'.     |
+#           |                       |                         |  - Envia datos del     |
+#           |                       |                         |    medicamento a la    |
+#           |                       |                         |    cola.               |
 #           +-----------------------+-------------------------+------------------------+
 #
 #   A continuación se describen los métodos que se implementaron en ésta clase:
@@ -50,14 +53,17 @@
 #           |                        |                          |    publicación se uti-|
 #           |                        |                          |    lizará.            |
 #           +------------------------+--------------------------+-----------------------+
-#           |                        |                          |Simula los medicamentos|
-#           |     simulate_data()    |           None           |que seran suministrados|
-#           |                        |                          |a los pacientes        |
+#           |                        |                          |  - Genera un número   |
+#           | simulate_medicamento() |           None           |    aleatorio entre 0  |
+#           |                        |                          |    y 7.               |
 #           +------------------------+--------------------------+-----------------------+
+#           |                        |                          |  - Genera un número   |
+#           |     simulate_hora()    |           None           |    aleatorio entre 1  |
+#           |                        |                          |    y 12.              |
 #           +------------------------+--------------------------+-----------------------+
-#           |                        |                          |Simula la dosis de los |
-#           |     simulate_dosis()   |           None           |medicamentos que seran |
-#           |                        |                          |suministrados			|
+#           |                        |                          |  - Genera un número   |
+#           |   simulate_minutos()   |           None           |    aleatorio entre 0  |
+#           |                        |                          |    y 59.              |
 #           +------------------------+--------------------------+-----------------------+
 #
 #           Nota: "propio de Rabbit" implica que se utilizan de manera interna para realizar
@@ -69,19 +75,18 @@
 #
 #--------------------------------------------------------------------------------------------------
 
-import random
 import pika
+import random
+import time
 
 
-class ProcesadorTemporizador():
+class ProcesadorTemporizador:
     nombre = None
     id = 0
-    #horaMed es la hora en que toca tomar las medicinas
-    horaMed=24
+    medicinas = ['ibuprofeno', 'insulina', 'furosemida', 'piroxicam', 'tolbutamida']
 
-
-    def __init__(self, nombre):
-        self.nombre = nombre
+    def __init__(self, pnombre):
+        self.nombre = pnombre
         self.id = int(self.set_id())
 
     def set_id(self):
@@ -90,41 +95,55 @@ class ProcesadorTemporizador():
     def get_name(self):
         return self.nombre
 
-    def start_service(self):
+    #def add_medicamento(self, nombre_medicamento, hora):
+    #    self.medicamentos.append(Medicamento(nombre_medicamento, hora))
+    #    print(self.nombre + ' vi')
+
+    def consume(self):
         #   +--------------------------------------------------------------------------------------+
-        #   | La siguiente línea permite realizar la conexión con el servidor que aloja a RabbitMQ |
+        #   | La siguiente linea permite realizar la conexión con el servidor que aloja a RabbitMQ |
         #   +--------------------------------------------------------------------------------------+
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
         #   +----------------------------------------------------------------------------------------+
-        #   | La siguiente línea permite definir el tipo de intercambio y de que cola recibirá datos |
+        #   | La siguiente linea permite definir el tipo de intercambio y de que cola recibirá datos |
         #   +----------------------------------------------------------------------------------------+
         channel.exchange_declare(exchange='direct_timer', type='direct')
-        severity = 'temp'
-        #temp = self.simulate_data()
-        #simulate=self.simulate_dosis();
-        mensaje = 'TM:' + str(self.id) + ':' + self.nombre + \
-            ':' + str(self.horaMed)
+        severity = 'temporizador'
+        
+        
         #   +----------------------------------------------------------------------------+
-        #   | La siguiente línea permite enviar datos a la cola seleccionada.            |
+        #   | La siguiente linea permite enviar datos a la cola seleccionada.            |
         #   +----------------------------------------------------------------------------+
-        channel.basic_publish(exchange='direct_timer',
-                              routing_key=severity, body=mensaje)        
+        
+        medicinas = self.simulate_med()
+        hora = self.simulate_horas()
+        minuto = self.simulate_minutos()
+        hora_de_sistema = int(time.strftime("%I"))
+        minutos_de_sistema = int(time.strftime("%M"))
 
-        print('+---------------+--------------------+-------------------------------+-------+')
-        print('|      ' + str(self.id) +'     |     ' + self.nombre +'     |      HORA ENVIADA      |  ' + str(self.horaMed) +'    | ')
-        print('+---------------+--------------------+-------------------------------+-------+')
-        print('')
+        if (hora_de_sistema == hora):
 
-        #Restamos una hora para simular que pasa el tiempo
-        self.horaMed = self.horaMed - 1
-        #Si la hora llega a cero, se reinicia el temporizador
-        if self.horaMed == 0:
-        	self.horaMed = 24
-
-
-
-
-
+        #   +----------------------------------------------------------------------------+
+        #   | La siguiente linea permite enviar datos a la cola seleccionada.            |
+        #   +----------------------------------------------------------------------------+
+        
+            mensaje = 'PA;' + str(self.id) + ';' + self.nombre + ';' + str(self.medicinas[medicinas]) + ';' + str(hora) + ':' + str(minuto) + ';1 tableta'
+            channel.basic_publish(exchange='direct_timer',
+                                    routing_key=severity, body=mensaje)         
+            print('+---------------+--------------------+-------------------------------+-------+')
+            print('|      ' + str(self.id) +'     |     ' + self.nombre +'     | hora de medicina: |  ' + str(self.medicamentos[medicinas]) + '  |')
+            print('+---------------+--------------------+-------------------------------+-------+')
+            print('')
+                
         connection.close()
+
+    def simulate_med(self):
+        return random.randint(int(0), int(7))
+
+    def simulate_horas(self):
+        return random.randint(int(1), int(12))
+
+    def simulate_minutos(self):
+        return random.randint(int(0), int(59))
